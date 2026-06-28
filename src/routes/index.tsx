@@ -82,13 +82,24 @@ function LoginPage() {
               onChange={setPassword}
             />
 
+            {error && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <span className="text-foreground/90">{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3.5 text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.99]"
+              disabled={loading}
+              className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3.5 text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
               style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}
             >
-              <Play className="h-5 w-5 fill-current" />
-              Entrar e Assistir
+              {loading ? (
+                <><Loader2 className="h-5 w-5 animate-spin" />Conectando...</>
+              ) : (
+                <><Play className="h-5 w-5 fill-current" />Entrar e Assistir</>
+              )}
             </button>
           </form>
 
