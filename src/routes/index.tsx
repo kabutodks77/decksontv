@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Globe, User, Lock, Play } from "lucide-react";
+import { Globe, User, Lock, Play, Loader2, AlertCircle } from "lucide-react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
+import { authenticate, saveCreds } from "@/lib/xtream";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,12 +19,29 @@ function LoginPage() {
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("cfp_user", username);
-    localStorage.setItem("cfp_server", server);
-    navigate({ to: "/dashboard" });
+    setError(null);
+    setLoading(true);
+    try {
+      const creds = { url: server, username, password };
+      await authenticate(creds);
+      saveCreds(creds);
+      localStorage.setItem("cfp_user", username);
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao conectar";
+      setError(
+        /Failed to fetch|NetworkError|HTTP 0/i.test(msg)
+          ? "Não foi possível conectar ao servidor. Verifique a URL e sua conexão (o servidor pode estar offline ou bloquear o navegador via CORS)."
+          : msg,
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,13 +99,24 @@ function LoginPage() {
               onChange={setPassword}
             />
 
+            {error && (
+              <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                <span className="text-foreground/90">{error}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3.5 text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.99]"
+              disabled={loading}
+              className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3.5 text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:scale-100"
               style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}
             >
-              <Play className="h-5 w-5 fill-current" />
-              Entrar e Assistir
+              {loading ? (
+                <><Loader2 className="h-5 w-5 animate-spin" />Conectando...</>
+              ) : (
+                <><Play className="h-5 w-5 fill-current" />Entrar e Assistir</>
+              )}
             </button>
           </form>
 
