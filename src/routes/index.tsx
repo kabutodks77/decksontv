@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Globe, User, Lock, Play } from "lucide-react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
@@ -14,13 +14,16 @@ export const Route = createFileRoute("/")({
 });
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // hook up auth later
+    localStorage.setItem("cfp_user", username);
+    localStorage.setItem("cfp_server", server);
+    navigate({ to: "/dashboard" });
   };
 
   return (
