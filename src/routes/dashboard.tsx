@@ -146,15 +146,22 @@ function Dashboard() {
             <p className="text-sm text-muted-foreground">O que vamos assistir hoje?</p>
           </div>
 
+          {loadError && (
+            <div className="mb-6 flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <span>Não foi possível carregar categorias: {loadError}</span>
+            </div>
+          )}
+
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cards.map(({ title, desc, Icon, accent }) => (
+            {cards.map(({ title, desc, Icon, count }) => (
               <button
                 key={title}
                 className="group relative overflow-hidden rounded-2xl border border-border bg-card/60 p-6 text-left transition-all hover:-translate-y-1 hover:border-primary/60"
                 style={{ boxShadow: "var(--shadow-card)" }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${accent} opacity-60 transition-opacity group-hover:opacity-100`} />
-                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl transition-opacity"
+                <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-700/5 opacity-60 transition-opacity group-hover:opacity-100" />
+                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl"
                   style={{ background: "oklch(0.58 0.24 25 / 0.35)" }} />
 
                 <div className="relative">
@@ -164,14 +171,24 @@ function Dashboard() {
                   </div>
                   <h2 className="text-xl font-bold tracking-tight">{title}</h2>
                   <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
-                  <span className="mt-6 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                    Acessar
-                    <span className="transition-transform group-hover:translate-x-1">→</span>
-                  </span>
+                  <div className="mt-4 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      {cats == null && !loadError ? (
+                        <><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</>
+                      ) : (
+                        <>{count ?? 0} categorias</>
+                      )}
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                      Acessar
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </span>
+                  </div>
                 </div>
               </button>
             ))}
           </div>
+        </section>
         </section>
       </main>
     </div>
