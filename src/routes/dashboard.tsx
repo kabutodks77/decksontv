@@ -1,7 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { Tv, Clapperboard, Layers, LogOut, Settings, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Tv, Clapperboard, Layers, LogOut, Settings, Menu, X, Loader2, AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
+import {
+  getCreds,
+  clearCreds,
+  getLiveCategories,
+  getVodCategories,
+  getSeriesCategories,
+  type XtreamCategory,
+} from "@/lib/xtream";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -13,21 +21,55 @@ export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
 });
 
+type Cats = {
+  live: XtreamCategory[];
+  vod: XtreamCategory[];
+  series: XtreamCategory[];
+};
+
 function Dashboard() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [cats, setCats] = useState<Cats | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const user = typeof window !== "undefined" ? localStorage.getItem("cfp_user") ?? "Usuário" : "Usuário";
 
+  useEffect(() => {
+    const creds = getCreds();
+    if (!creds) {
+      navigate({ to: "/" });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [live, vod, series] = await Promise.all([
+          getLiveCategories(creds),
+          getVodCategories(creds),
+          getSeriesCategories(creds),
+        ]);
+        if (!cancelled) setCats({ live: live ?? [], vod: vod ?? [], series: series ?? [] });
+      } catch (err) {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Erro ao carregar categorias");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
+
   const logout = () => {
+    clearCreds();
     localStorage.removeItem("cfp_user");
     navigate({ to: "/" });
   };
 
   const cards = [
-    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, accent: "from-red-500/30 to-red-700/10" },
-    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, accent: "from-red-500/30 to-red-700/10" },
-    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, accent: "from-red-500/30 to-red-700/10" },
+    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, count: cats?.live.length },
+    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, count: cats?.vod.length },
+    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, count: cats?.series.length },
   ];
+
 
   return (
     <div className="relative flex min-h-screen">
