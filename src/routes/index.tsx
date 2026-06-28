@@ -19,12 +19,29 @@ function LoginPage() {
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("cfp_user", username);
-    localStorage.setItem("cfp_server", server);
-    navigate({ to: "/dashboard" });
+    setError(null);
+    setLoading(true);
+    try {
+      const creds = { url: server, username, password };
+      await authenticate(creds);
+      saveCreds(creds);
+      localStorage.setItem("cfp_user", username);
+      navigate({ to: "/dashboard" });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Falha ao conectar";
+      setError(
+        /Failed to fetch|NetworkError|HTTP 0/i.test(msg)
+          ? "Não foi possível conectar ao servidor. Verifique a URL e sua conexão (o servidor pode estar offline ou bloquear o navegador via CORS)."
+          : msg,
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
