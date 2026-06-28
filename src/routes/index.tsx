@@ -1,29 +1,141 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Globe, User, Lock, Play } from "lucide-react";
+import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "CINEFLIXPAYMENT — Entre e Assista" },
+      { name: "description", content: "Acesse sua conta CINEFLIXPAYMENT e comece a assistir agora." },
     ],
   }),
-  component: Index,
+  component: LoginPage,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
+function LoginPage() {
+  const [server, setServer] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // hook up auth later
+  };
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
+      {/* ambient glows */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full blur-3xl opacity-40"
+        style={{ background: "radial-gradient(circle, oklch(0.55 0.24 25 / 0.5), transparent 70%)" }} />
+      <div className="pointer-events-none absolute bottom-0 right-0 h-[400px] w-[400px] rounded-full blur-3xl opacity-30"
+        style={{ background: "radial-gradient(circle, oklch(0.55 0.24 25 / 0.4), transparent 70%)" }} />
+
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src={logoAsset.url}
+            alt="CINEFLIXPAYMENT"
+            className="w-full max-w-sm select-none drop-shadow-[0_0_30px_oklch(0.58_0.24_25/0.6)]"
+            draggable={false}
+          />
+        </div>
+
+        {/* Card */}
+        <div
+          className="rounded-2xl border border-border/60 bg-card/70 p-8 backdrop-blur-xl"
+          style={{ boxShadow: "var(--shadow-card)" }}
+        >
+          <h1 className="mb-1 text-center text-2xl font-bold tracking-tight">Bem-vindo de volta</h1>
+          <p className="mb-6 text-center text-sm text-muted-foreground">
+            Faça login para acessar seu conteúdo
+          </p>
+
+          <form onSubmit={onSubmit} className="space-y-4">
+            <Field
+              icon={<Globe className="h-4 w-4" />}
+              label="Endereço do Servidor (URL)"
+              type="url"
+              placeholder="https://servidor.exemplo.com"
+              value={server}
+              onChange={setServer}
+            />
+            <Field
+              icon={<User className="h-4 w-4" />}
+              label="Usuário"
+              type="text"
+              placeholder="Seu usuário"
+              value={username}
+              onChange={setUsername}
+            />
+            <Field
+              icon={<Lock className="h-4 w-4" />}
+              label="Senha"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={setPassword}
+            />
+
+            <button
+              type="submit"
+              className="group relative mt-2 flex w-full items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3.5 text-base font-bold uppercase tracking-wide text-primary-foreground transition-all hover:scale-[1.02] active:scale-[0.99]"
+              style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}
+            >
+              <Play className="h-5 w-5 fill-current" />
+              Entrar e Assistir
+            </button>
+          </form>
+
+          <div className="mt-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">ou</span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          <button
+            type="button"
+            className="mt-4 w-full rounded-lg border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/60 hover:text-foreground"
+          >
+            Não tem uma conta? <span className="text-primary">Adquira seu plano aqui</span>
+          </button>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} CINEFLIXPAYMENT. Todos os direitos reservados.
+        </p>
+      </div>
+    </main>
+  );
+}
+
+function Field({
+  icon, label, type, placeholder, value, onChange,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  type: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </span>
+      <div className="group flex items-center gap-2 rounded-lg border border-border bg-input/50 px-3 py-2.5 transition-colors focus-within:border-primary focus-within:bg-input">
+        <span className="text-muted-foreground group-focus-within:text-primary">{icon}</span>
+        <input
+          type={type}
+          placeholder={placeholder}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          required
+        />
+      </div>
+    </label>
   );
 }
