@@ -75,7 +75,7 @@ async function handleProxy(request: Request): Promise<Response> {
   }
 }
 
-export const Route = createFileRoute("/api/xtream")({
+export const Route = createFileRoute("/api/public/xtream")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
