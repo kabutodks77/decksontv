@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Globe, User, Lock, Play, Loader2, AlertCircle } from "lucide-react";
+import { Globe, User, Lock, Play, Loader2, AlertCircle, Cpu } from "lucide-react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
 import { authenticate, saveCreds } from "@/lib/xtream";
 
@@ -16,9 +16,11 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"user" | "mac">("user");
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [mac, setMac] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,10 +29,13 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const creds = { url: server, username, password };
+      const creds =
+        mode === "mac"
+          ? { url: server, mac: mac.trim() }
+          : { url: server, username, password };
       await authenticate(creds);
       saveCreds(creds);
-      localStorage.setItem("cfp_user", username);
+      localStorage.setItem("cfp_user", mode === "mac" ? mac.trim() : username);
       navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao conectar";
@@ -74,6 +79,32 @@ function LoginPage() {
           </p>
 
           <form onSubmit={onSubmit} className="space-y-4">
+            {/* Mode toggle */}
+            <div className="flex gap-1 rounded-lg border border-border bg-input/40 p-1">
+              <button
+                type="button"
+                onClick={() => setMode("user")}
+                className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  mode === "user"
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Usuário e Senha
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("mac")}
+                className={`flex-1 rounded-md px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors ${
+                  mode === "mac"
+                    ? "bg-primary/20 text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Endereço MAC
+              </button>
+            </div>
+
             <Field
               icon={<Globe className="h-4 w-4" />}
               label="Endereço do Servidor (URL)"
@@ -82,22 +113,36 @@ function LoginPage() {
               value={server}
               onChange={setServer}
             />
-            <Field
-              icon={<User className="h-4 w-4" />}
-              label="Usuário"
-              type="text"
-              placeholder="Seu usuário"
-              value={username}
-              onChange={setUsername}
-            />
-            <Field
-              icon={<Lock className="h-4 w-4" />}
-              label="Senha"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={setPassword}
-            />
+
+            {mode === "user" ? (
+              <>
+                <Field
+                  icon={<User className="h-4 w-4" />}
+                  label="Usuário"
+                  type="text"
+                  placeholder="Seu usuário"
+                  value={username}
+                  onChange={setUsername}
+                />
+                <Field
+                  icon={<Lock className="h-4 w-4" />}
+                  label="Senha"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={setPassword}
+                />
+              </>
+            ) : (
+              <Field
+                icon={<Cpu className="h-4 w-4" />}
+                label="Endereço MAC"
+                type="text"
+                placeholder="00:1A:79:XX:XX:XX"
+                value={mac}
+                onChange={setMac}
+              />
+            )}
 
             {error && (
               <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm">

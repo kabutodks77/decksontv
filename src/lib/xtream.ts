@@ -2,8 +2,9 @@
 
 export type XtreamCreds = {
   url: string;
-  username: string;
-  password: string;
+  username?: string;
+  password?: string;
+  mac?: string;
 };
 
 export type XtreamCategory = {
