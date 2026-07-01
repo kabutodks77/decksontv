@@ -26,17 +26,20 @@ async function handleProxy(request: Request): Promise<Response> {
     let url: string | null;
     let username: string | null;
     let password: string | null;
+    let mac: string | null;
     let action: string | null = null;
     const extra: Record<string, string> = {};
+    const RESERVED = ["url", "username", "password", "mac", "action"];
 
     if (request.method === "POST") {
       const body = (await request.json()) as Record<string, string | undefined>;
       url = body.url ?? null;
       username = body.username ?? null;
       password = body.password ?? null;
+      mac = body.mac ?? null;
       action = body.action ?? null;
       for (const [k, v] of Object.entries(body)) {
-        if (["url", "username", "password", "action"].includes(k)) continue;
+        if (RESERVED.includes(k)) continue;
         if (typeof v === "string") extra[k] = v;
       }
     } else {
@@ -44,27 +47,58 @@ async function handleProxy(request: Request): Promise<Response> {
       url = sp.get("url");
       username = sp.get("username");
       password = sp.get("password");
+      mac = sp.get("mac");
       action = sp.get("action");
       sp.forEach((v, k) => {
-        if (!["url", "username", "password", "action"].includes(k)) extra[k] = v;
+        if (!RESERVED.includes(k)) extra[k] = v;
       });
     }
 
-    if (!url || !username || !password) {
+    const hasUserPass = !!(username && password);
+    const hasMac = !!mac;
+    if (!url || (!hasUserPass && !hasMac)) {
       return new Response(
-        JSON.stringify({ error: "Parâmetros obrigatórios: url, username, password" }),
+        JSON.stringify({ error: "Informe a URL e (usuário + senha) ou o endereço MAC." }),
         { status: 400, headers: { "Content-Type": "application/json", ...CORS } },
       );
     }
 
+    // Basic MAC format validation (accepts XX:XX:XX:XX:XX:XX or XX-XX-...)
+    if (hasMac) {
+      const normalizedMac = mac!.trim().toUpperCase().replace(/-/g, ":");
+      if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(normalizedMac)) {
+        return new Response(
+          JSON.stringify({ error: "Endereço MAC inválido. Use o formato 00:1A:79:XX:XX:XX." }),
+          { status: 400, headers: { "Content-Type": "application/json", ...CORS } },
+        );
+      }
+      mac = normalizedMac;
+    }
+
     const base = normalizeUrl(url);
-    const params = new URLSearchParams({ username, password, ...extra });
+    const params = new URLSearchParams(extra);
+    if (hasUserPass) {
+      params.set("username", username!);
+      params.set("password", password!);
+    }
+    if (hasMac) {
+      // Many Xtream/Stalker panels accept MAC as both username and via `mac` param.
+      params.set("mac", mac!);
+      if (!hasUserPass) {
+        params.set("username", mac!);
+        params.set("password", mac!);
+      }
+    }
     if (action) params.set("action", action);
     const target = `${base}/player_api.php?${params.toString()}`;
 
     const upstream = await fetch(target, {
       method: "GET",
-      headers: { Accept: "application/json", "User-Agent": "CineflixPayment/1.0" },
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "Mozilla/5.0 (QtEmbedded; U; Linux; C)",
+        ...(hasMac ? { Cookie: `mac=${encodeURIComponent(mac!)}` } : {}),
+      },
     });
 
     const text = await upstream.text();
@@ -77,6 +111,12 @@ async function handleProxy(request: Request): Promise<Response> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Erro no proxy";
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 502,
+      headers: { "Content-Type": "application/json", ...CORS },
+    });
+  }
+}
     return new Response(JSON.stringify({ error: msg }), {
       status: 502,
       headers: { "Content-Type": "application/json", ...CORS },
