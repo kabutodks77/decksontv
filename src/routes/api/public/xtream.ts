@@ -8,7 +8,16 @@ const CORS = {
 
 function normalizeUrl(url: string) {
   let u = url.trim();
+  // Add protocol if missing
   if (!/^https?:\/\//i.test(u)) u = "http://" + u;
+  // Strip query string / hash the user may have pasted
+  u = u.split("#")[0].split("?")[0];
+  // Strip any Xtream endpoint the user may have included
+  u = u.replace(/\/(player_api|panel_api|xmltv|get)\.php.*$/i, "");
+  // Strip our own local proxy prefix if the user pasted it back
+  u = u.replace(/\/api\/public\/xtream\/?$/i, "");
+  u = u.replace(/\/api\/public\/?$/i, "");
+  // Remove trailing slashes
   return u.replace(/\/+$/, "");
 }
 
