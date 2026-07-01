@@ -16,9 +16,11 @@ export const Route = createFileRoute("/")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const [mode, setMode] = useState<"user" | "mac">("user");
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [mac, setMac] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,10 +29,13 @@ function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const creds = { url: server, username, password };
+      const creds =
+        mode === "mac"
+          ? { url: server, mac: mac.trim() }
+          : { url: server, username, password };
       await authenticate(creds);
       saveCreds(creds);
-      localStorage.setItem("cfp_user", username);
+      localStorage.setItem("cfp_user", mode === "mac" ? mac.trim() : username);
       navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao conectar";
