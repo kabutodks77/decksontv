@@ -1,4 +1,4 @@
-// Xtream Codes API helpers (client-side)
+// Xtream Codes API helpers (via server-side proxy to avoid CORS)
 
 export type XtreamCreds = {
   url: string;
@@ -31,26 +31,23 @@ export function clearCreds() {
   localStorage.removeItem(CREDS_KEY);
 }
 
-function normalizeUrl(url: string) {
-  let u = url.trim();
-  if (!/^https?:\/\//i.test(u)) u = "http://" + u;
-  return u.replace(/\/+$/, "");
-}
-
-function buildApiUrl(creds: XtreamCreds, params: Record<string, string> = {}) {
-  const base = normalizeUrl(creds.url);
-  const sp = new URLSearchParams({
-    username: creds.username,
-    password: creds.password,
-    ...params,
+async function proxy<T>(creds: XtreamCreds, action?: string, extra: Record<string, string> = {}): Promise<T> {
+  const res = await fetch("/api/xtream", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...creds, ...(action ? { action } : {}), ...extra }),
   });
-  return `${base}/player_api.php?${sp.toString()}`;
-}
-
-async function xtreamFetch<T>(url: string): Promise<T> {
-  const res = await fetch(url, { method: "GET" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
+  const text = await res.text();
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    throw new Error(`Resposta inválida do servidor Xtream (status ${res.status})`);
+  }
+  if (!res.ok) {
+    const msg = (data as { error?: string })?.error ?? `HTTP ${res.status}`;
+    throw new Error(msg);
+  }
   return data as T;
 }
 
@@ -66,7 +63,7 @@ export type XtreamAuthResponse = {
 };
 
 export async function authenticate(creds: XtreamCreds): Promise<XtreamAuthResponse> {
-  const data = await xtreamFetch<XtreamAuthResponse>(buildApiUrl(creds));
+  const data = await proxy<XtreamAuthResponse>(creds);
   const auth = data?.user_info?.auth;
   const status = data?.user_info?.status;
   const ok = (auth === 1 || auth === "1") && (!status || /active/i.test(String(status)));
@@ -77,11 +74,11 @@ export async function authenticate(creds: XtreamCreds): Promise<XtreamAuthRespon
 }
 
 export async function getLiveCategories(creds: XtreamCreds) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(creds, { action: "get_live_categories" }));
+  return proxy<XtreamCategory[]>(creds, "get_live_categories");
 }
 export async function getVodCategories(creds: XtreamCreds) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(creds, { action: "get_vod_categories" }));
+  return proxy<XtreamCategory[]>(creds, "get_vod_categories");
 }
 export async function getSeriesCategories(creds: XtreamCreds) {
-  return xtreamFetch<XtreamCategory[]>(buildApiUrl(creds, { action: "get_series_categories" }));
+  return proxy<XtreamCategory[]>(creds, "get_series_categories");
 }
