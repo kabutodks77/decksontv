@@ -117,12 +117,6 @@ async function handleProxy(request: Request): Promise<Response> {
     });
   }
 }
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 502,
-      headers: { "Content-Type": "application/json", ...CORS },
-    });
-  }
-}
 
 export const Route = createFileRoute("/api/public/xtream")({
   server: {
