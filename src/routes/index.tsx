@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Globe, User, Lock, Play, Loader2, AlertCircle } from "lucide-react";
+import { Globe, User, Lock, Play, Loader2, AlertCircle, Cpu } from "lucide-react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
 import { authenticate, saveCreds } from "@/lib/xtream";
 
