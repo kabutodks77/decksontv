@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiXtreamRouteImport } from './routes/api/xtream'
+import { Route as ApiPublicXtreamRouteImport } from './routes/api/public/xtream'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -23,40 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiXtreamRoute = ApiXtreamRouteImport.update({
-  id: '/api/xtream',
-  path: '/api/xtream',
+const ApiPublicXtreamRoute = ApiPublicXtreamRouteImport.update({
+  id: '/api/public/xtream',
+  path: '/api/public/xtream',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/api/xtream': typeof ApiXtreamRoute
+  '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/api/xtream': typeof ApiXtreamRoute
+  '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
-  '/api/xtream': typeof ApiXtreamRoute
+  '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/api/xtream'
+  fullPaths: '/' | '/dashboard' | '/api/public/xtream'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/api/xtream'
-  id: '__root__' | '/' | '/dashboard' | '/api/xtream'
+  to: '/' | '/dashboard' | '/api/public/xtream'
+  id: '__root__' | '/' | '/dashboard' | '/api/public/xtream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
-  ApiXtreamRoute: typeof ApiXtreamRoute
+  ApiPublicXtreamRoute: typeof ApiPublicXtreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +75,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/xtream': {
-      id: '/api/xtream'
-      path: '/api/xtream'
-      fullPath: '/api/xtream'
-      preLoaderRoute: typeof ApiXtreamRouteImport
+    '/api/public/xtream': {
+      id: '/api/public/xtream'
+      path: '/api/public/xtream'
+      fullPath: '/api/public/xtream'
+      preLoaderRoute: typeof ApiPublicXtreamRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
-  ApiXtreamRoute: ApiXtreamRoute,
+  ApiPublicXtreamRoute: ApiPublicXtreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

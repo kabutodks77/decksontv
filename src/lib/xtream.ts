@@ -32,7 +32,7 @@ export function clearCreds() {
 }
 
 async function proxy<T>(creds: XtreamCreds, action?: string, extra: Record<string, string> = {}): Promise<T> {
-  const res = await fetch("/api/xtream", {
+  const res = await fetch("/api/public/xtream", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...creds, ...(action ? { action } : {}), ...extra }),
