@@ -159,7 +159,6 @@ function Dashboard() {
                 key={title}
                 to={to}
                 params={{ type }}
-                key={title}
                 className="group relative overflow-hidden rounded-2xl border border-border bg-card/60 p-6 text-left transition-all hover:-translate-y-1 hover:border-primary/60"
                 style={{ boxShadow: "var(--shadow-card)" }}
               >
