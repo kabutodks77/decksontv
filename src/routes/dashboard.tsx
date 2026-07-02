@@ -65,9 +65,9 @@ function Dashboard() {
   };
 
   const cards = [
-    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, count: cats?.live.length },
-    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, count: cats?.vod.length },
-    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, count: cats?.series.length },
+    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, count: cats?.live.length, to: "/browse/$type" as const, type: "live" },
+    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, count: cats?.vod.length, to: "/browse/$type" as const, type: "vod" },
+    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, count: cats?.series.length, to: "/browse/$type" as const, type: "series" },
   ];
 
 
