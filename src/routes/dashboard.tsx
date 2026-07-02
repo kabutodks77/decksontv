@@ -188,7 +188,7 @@ function Dashboard() {
                     </span>
                   </div>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
