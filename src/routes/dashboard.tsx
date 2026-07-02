@@ -65,9 +65,9 @@ function Dashboard() {
   };
 
   const cards = [
-    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, count: cats?.live.length },
-    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, count: cats?.vod.length },
-    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, count: cats?.series.length },
+    { title: "Canais ao Vivo", desc: "Transmissões em tempo real", Icon: Tv, count: cats?.live.length, to: "/browse/$type" as const, type: "live" },
+    { title: "Filmes (VOD)", desc: "Catálogo completo on-demand", Icon: Clapperboard, count: cats?.vod.length, to: "/browse/$type" as const, type: "vod" },
+    { title: "Séries", desc: "Episódios e temporadas", Icon: Layers, count: cats?.series.length, to: "/browse/$type" as const, type: "series" },
   ];
 
 
@@ -154,9 +154,11 @@ function Dashboard() {
           )}
 
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cards.map(({ title, desc, Icon, count }) => (
-              <button
+            {cards.map(({ title, desc, Icon, count, to, type }) => (
+              <Link
                 key={title}
+                to={to}
+                params={{ type }}
                 className="group relative overflow-hidden rounded-2xl border border-border bg-card/60 p-6 text-left transition-all hover:-translate-y-1 hover:border-primary/60"
                 style={{ boxShadow: "var(--shadow-card)" }}
               >
@@ -185,7 +187,7 @@ function Dashboard() {
                     </span>
                   </div>
                 </div>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
