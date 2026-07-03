@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BrowseTypeRouteImport } from './routes/browse.$type'
 import { Route as ApiPublicXtreamRouteImport } from './routes/api/public/xtream'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -38,12 +44,14 @@ const ApiPublicXtreamRoute = ApiPublicXtreamRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/browse/$type': typeof BrowseTypeRoute
   '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/browse/$type': typeof BrowseTypeRoute
   '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
@@ -51,26 +59,46 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/settings': typeof SettingsRoute
   '/browse/$type': typeof BrowseTypeRoute
   '/api/public/xtream': typeof ApiPublicXtreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/browse/$type' | '/api/public/xtream'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/settings'
+    | '/browse/$type'
+    | '/api/public/xtream'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/browse/$type' | '/api/public/xtream'
-  id: '__root__' | '/' | '/dashboard' | '/browse/$type' | '/api/public/xtream'
+  to: '/' | '/dashboard' | '/settings' | '/browse/$type' | '/api/public/xtream'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/settings'
+    | '/browse/$type'
+    | '/api/public/xtream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  SettingsRoute: typeof SettingsRoute
   BrowseTypeRoute: typeof BrowseTypeRoute
   ApiPublicXtreamRoute: typeof ApiPublicXtreamRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -105,6 +133,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  SettingsRoute: SettingsRoute,
   BrowseTypeRoute: BrowseTypeRoute,
   ApiPublicXtreamRoute: ApiPublicXtreamRoute,
 }
