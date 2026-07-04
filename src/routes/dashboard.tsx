@@ -229,10 +229,8 @@ function SidebarLink({
   const active = pathname === resolved;
   return (
     <Link
-      // @ts-expect-error dynamic to
-      to={to}
-      // @ts-expect-error dynamic params
-      params={params}
+      to={to as never}
+      params={params as never}
       onClick={onNavigate}
       className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
         active
