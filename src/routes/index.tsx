@@ -42,7 +42,8 @@ function LoginPage() {
           : { url: server.trim(), username: username.trim(), password };
       await authenticate(creds);
       saveCreds(creds);
-      localStorage.setItem("cfp_user", mode === "mac" ? mac.trim() : username.trim());
+      const displayName = name.trim() || (mode === "mac" ? mac.trim() : username.trim());
+      localStorage.setItem("cfp_user", displayName);
       navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao conectar";
