@@ -143,16 +143,16 @@ function Dashboard() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3">
             {cards.map(({ title, desc, count, type, image }) => (
               <Link
                 key={title}
                 to="/browse/$type"
                 params={{ type }}
-                className="group relative block overflow-hidden rounded-2xl border border-red-500/40 bg-black text-left transition-all hover:-translate-y-1 hover:border-red-500 focus:outline-none focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-500"
-                style={{ boxShadow: "0 0 0 1px oklch(0.58 0.24 25 / 0.25), 0 0 30px -6px oklch(0.58 0.24 25 / 0.55)" }}
+                className="group relative block overflow-hidden rounded-xl sm:rounded-2xl border border-red-500/40 bg-black text-left transition-all hover:-translate-y-1 hover:border-red-500 focus:outline-none focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-500"
+                style={{ boxShadow: "0 0 0 1px oklch(0.58 0.24 25 / 0.2), 0 0 20px -8px oklch(0.58 0.24 25 / 0.45)" }}
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden">
+                <div className="relative aspect-[4/3] sm:aspect-[16/10] w-full overflow-hidden">
                   <img
                     src={image}
                     alt={title}
@@ -161,19 +161,19 @@ function Dashboard() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                 </div>
-                <div className="relative -mt-16 px-5 pb-5">
-                  <h2 className="text-2xl font-black tracking-wide text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{title}</h2>
-                  <p className="mt-1 text-sm text-white/70">{desc}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300">
+                <div className="relative -mt-10 sm:-mt-16 px-3 pb-3 sm:px-5 sm:pb-5">
+                  <h2 className="text-base sm:text-2xl font-black tracking-wide text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{title}</h2>
+                  <p className="mt-0.5 sm:mt-1 hidden sm:block text-sm text-white/70">{desc}</p>
+                  <div className="mt-2 sm:mt-4 flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-red-500/40 bg-red-500/10 px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium text-red-300">
                       {cats == null && !loadError ? (
-                        <><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</>
+                        <><Loader2 className="h-3 w-3 animate-spin" /> ...</>
                       ) : (
-                        <>{count ?? 0} categorias</>
+                        <>{count ?? 0} cat.</>
                       )}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-red-400">
-                      Acessar
+                    <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-red-400">
+                      <span className="hidden sm:inline">Acessar</span>
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </span>
                   </div>

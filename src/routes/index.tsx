@@ -17,6 +17,7 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"user" | "mac">("user");
+  const [name, setName] = useState("");
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -41,7 +42,8 @@ function LoginPage() {
           : { url: server.trim(), username: username.trim(), password };
       await authenticate(creds);
       saveCreds(creds);
-      localStorage.setItem("cfp_user", mode === "mac" ? mac.trim() : username.trim());
+      const displayName = name.trim() || (mode === "mac" ? mac.trim() : username.trim());
+      localStorage.setItem("cfp_user", displayName);
       navigate({ to: "/dashboard" });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Falha ao conectar";
@@ -147,6 +149,16 @@ function LoginPage() {
                     Endereço MAC
                   </ModeButton>
                 </div>
+
+                <Field
+                  icon={<User className="h-5 w-5" />}
+                  label="Seu Nome"
+                  type="text"
+                  placeholder="Como devemos te chamar?"
+                  value={name}
+                  onChange={setName}
+                  autoComplete="name"
+                />
 
                 <Field
                   icon={<Globe className="h-5 w-5" />}

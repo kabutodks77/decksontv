@@ -9,11 +9,11 @@ export type VideoPlayerProps = {
   onClose?: () => void;
 };
 
-// Try to lock screen orientation to landscape (Android/Chrome). Ignored on iOS.
-async function lockLandscape() {
+// Force portrait orientation on the player (Android/Chrome). Ignored on iOS.
+async function lockPortrait() {
   try {
     const orientation = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void> } }).orientation;
-    if (orientation?.lock) await orientation.lock("landscape");
+    if (orientation?.lock) await orientation.lock("portrait");
   } catch {
     /* not supported (iOS Safari) */
   }
@@ -64,7 +64,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
       // Auto go fullscreen landscape on first playback
       if (containerRef.current) {
         await requestFullscreen(containerRef.current);
-        await lockLandscape();
+        await lockPortrait();
       }
     };
     video.addEventListener("playing", onReady, { once: true });
@@ -125,7 +125,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
   const goFullscreen = async () => {
     if (containerRef.current) {
       await requestFullscreen(containerRef.current);
-      await lockLandscape();
+      await lockPortrait();
     }
   };
 
