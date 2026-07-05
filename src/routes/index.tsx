@@ -17,6 +17,7 @@ export const Route = createFileRoute("/")({
 function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"user" | "mac">("user");
+  const [name, setName] = useState("");
   const [server, setServer] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
