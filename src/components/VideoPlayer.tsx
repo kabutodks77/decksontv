@@ -160,8 +160,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
             poster={poster}
             controls
             playsInline
-            // @ts-expect-error non-standard attribute for iOS inline playback
-            webkit-playsinline="true"
+            {...({ "webkit-playsinline": "true" } as Record<string, string>)}
             className="h-full w-full object-contain"
           />
           {/* ±5s skip buttons overlay */}
