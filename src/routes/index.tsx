@@ -151,6 +151,16 @@ function LoginPage() {
                 </div>
 
                 <Field
+                  icon={<User className="h-5 w-5" />}
+                  label="Seu Nome"
+                  type="text"
+                  placeholder="Como devemos te chamar?"
+                  value={name}
+                  onChange={setName}
+                  autoComplete="name"
+                />
+
+                <Field
                   icon={<Globe className="h-5 w-5" />}
                   label="Endereço do Servidor"
                   type="url"
