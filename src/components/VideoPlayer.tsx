@@ -64,7 +64,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
       // Auto go fullscreen landscape on first playback
       if (containerRef.current) {
         await requestFullscreen(containerRef.current);
-        await lockLandscape();
+        await lockPortrait();
       }
     };
     video.addEventListener("playing", onReady, { once: true });
@@ -125,7 +125,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
   const goFullscreen = async () => {
     if (containerRef.current) {
       await requestFullscreen(containerRef.current);
-      await lockLandscape();
+      await lockPortrait();
     }
   };
 
