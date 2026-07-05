@@ -143,35 +143,36 @@ function Dashboard() {
             </div>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {cards.map(({ title, desc, Icon, count, type }) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {cards.map(({ title, desc, count, type, image }) => (
               <Link
                 key={title}
                 to="/browse/$type"
                 params={{ type }}
-                className="group relative overflow-hidden rounded-2xl border border-border bg-card/60 p-6 text-left transition-all hover:-translate-y-1 hover:border-primary/60 focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary"
-                style={{ boxShadow: "var(--shadow-card)" }}
+                className="group relative block overflow-hidden rounded-2xl border border-red-500/40 bg-black text-left transition-all hover:-translate-y-1 hover:border-red-500 focus:outline-none focus-visible:border-red-500 focus-visible:ring-2 focus-visible:ring-red-500"
+                style={{ boxShadow: "0 0 0 1px oklch(0.58 0.24 25 / 0.25), 0 0 30px -6px oklch(0.58 0.24 25 / 0.55)" }}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-red-700/5 opacity-60 transition-opacity group-hover:opacity-100" />
-                <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full blur-3xl"
-                  style={{ background: "oklch(0.58 0.24 25 / 0.35)" }} />
-
-                <div className="relative">
-                  <div className="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl"
-                    style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-                    <Icon className="h-7 w-7 text-primary-foreground" />
-                  </div>
-                  <h2 className="text-xl font-bold tracking-tight">{title}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+                <div className="relative aspect-[16/10] w-full overflow-hidden">
+                  <img
+                    src={image}
+                    alt={title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                </div>
+                <div className="relative -mt-16 px-5 pb-5">
+                  <h2 className="text-2xl font-black tracking-wide text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">{title}</h2>
+                  <p className="mt-1 text-sm text-white/70">{desc}</p>
                   <div className="mt-4 flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/40 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300">
                       {cats == null && !loadError ? (
                         <><Loader2 className="h-3 w-3 animate-spin" /> Carregando...</>
                       ) : (
                         <>{count ?? 0} categorias</>
                       )}
                     </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary">
+                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-red-400">
                       Acessar
                       <span className="transition-transform group-hover:translate-x-1">→</span>
                     </span>
