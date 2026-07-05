@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate, Link, useRouterState } from "@tanstack/re
 import { Tv, Clapperboard, Layers, LogOut, Settings, Menu, X, Loader2, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import logoAsset from "@/assets/cineflix-logo.jpg.asset.json";
+import cardAoVivo from "@/assets/card-aovivo.jpg";
+import cardFilmes from "@/assets/card-filmes.jpg";
+import cardSeries from "@/assets/card-series.jpg";
 import {
   getCreds,
   clearCreds,
