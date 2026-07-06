@@ -126,7 +126,7 @@ function Dashboard() {
           </div>
         </header>
 
-        <section className="px-4 py-8 lg:px-10">
+        <section className="px-4 py-8 lg:px-10" style={{ paddingLeft: "max(1rem, env(safe-area-inset-left))", paddingRight: "max(1rem, env(safe-area-inset-right))" }}>
           <div className="mb-8 lg:hidden">
             <p className="text-xs uppercase tracking-wider text-muted-foreground">Bem-vindo de volta</p>
             <h1 className="text-2xl font-bold">Olá, {user} 👋</h1>
@@ -143,7 +143,7 @@ function Dashboard() {
             </div>
           )}
 
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 landscape:grid-cols-3 lg:grid-cols-3">
             {cards.map(({ title, desc, count, type, image }) => (
               <Link
                 key={title}

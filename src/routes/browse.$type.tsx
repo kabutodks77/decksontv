@@ -265,7 +265,7 @@ function BrowsePage() {
             )}
 
             {!loadingStreams && filteredStreams && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              <div className="grid grid-cols-3 gap-2 landscape:grid-cols-6 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8">
                 {filteredStreams.map((s, i) => {
                   const key = `${s.stream_id ?? s.series_id ?? i}-${s.name}`;
                   const cover = s.stream_icon ?? s.cover;
@@ -273,16 +273,16 @@ function BrowsePage() {
                     <button
                       key={key}
                       onClick={() => playStream(s)}
-                      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card/60 text-left transition-all hover:-translate-y-1 hover:border-primary/60"
+                      tabIndex={0}
+                      className="group relative flex flex-col overflow-hidden rounded-lg border border-transparent bg-card/60 text-left outline-none transition-all duration-150 ease-out hover:-translate-y-1 hover:border-red-500 hover:shadow-[0_0_0_2px_oklch(0.58_0.24_25),0_10px_30px_-10px_oklch(0.58_0.24_25/0.6)] focus-visible:z-10 focus-visible:scale-110 focus-visible:border-red-500 focus-visible:shadow-[0_0_0_2px_oklch(0.58_0.24_25),0_10px_30px_-10px_oklch(0.58_0.24_25/0.6)]"
                     >
                       <div className="relative aspect-[2/3] w-full overflow-hidden bg-muted">
                         {cover ? (
-                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={cover}
                             alt={s.name}
                             loading="lazy"
-                            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                            className="h-full w-full object-cover"
                             onError={(e) => {
                               (e.currentTarget as HTMLImageElement).style.display = "none";
                             }}
@@ -292,7 +292,7 @@ function BrowsePage() {
                             <Icon className="h-8 w-8 text-muted-foreground" />
                           </div>
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                           <div
                             className="flex h-12 w-12 items-center justify-center rounded-full"
                             style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}
@@ -302,7 +302,7 @@ function BrowsePage() {
                         </div>
                       </div>
                       <div className="p-2">
-                        <p className="line-clamp-2 text-xs font-semibold">{s.name}</p>
+                        <p className="line-clamp-2 text-[11px] font-semibold sm:text-xs">{s.name}</p>
                       </div>
                     </button>
                   );

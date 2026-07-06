@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Hls from "hls.js";
-import { Loader2, AlertCircle, X, Rewind, FastForward, Maximize2 } from "lucide-react";
+import { Loader2, AlertCircle, X, Rewind, FastForward, Maximize2, Scaling } from "lucide-react";
 
 export type VideoPlayerProps = {
   src: string;
@@ -9,13 +9,20 @@ export type VideoPlayerProps = {
   onClose?: () => void;
 };
 
-// Force portrait orientation on the player (Android/Chrome). Ignored on iOS.
+type ResizeMode = "contain" | "cover" | "fill";
+const RESIZE_LABELS: Record<ResizeMode, string> = {
+  contain: "Ajustar",
+  cover: "Zoom",
+  fill: "Preencher",
+};
+const RESIZE_ORDER: ResizeMode[] = ["contain", "cover", "fill"];
+
 async function lockPortrait() {
   try {
     const orientation = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void> } }).orientation;
     if (orientation?.lock) await orientation.lock("portrait");
   } catch {
-    /* not supported (iOS Safari) */
+    /* iOS Safari */
   }
 }
 
@@ -37,10 +44,10 @@ async function requestFullscreen(el: HTMLElement) {
   try {
     if (anyEl.requestFullscreen) await anyEl.requestFullscreen();
     else if (anyEl.webkitRequestFullscreen) await anyEl.webkitRequestFullscreen();
-    else if (anyEl.webkitEnterFullscreen) await anyEl.webkitEnterFullscreen(); // iOS video
+    else if (anyEl.webkitEnterFullscreen) await anyEl.webkitEnterFullscreen();
     else if (anyEl.msRequestFullscreen) await anyEl.msRequestFullscreen();
   } catch {
-    /* user gesture may be required */
+    /* user gesture required */
   }
 }
 
@@ -49,6 +56,8 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resize, setResize] = useState<ResizeMode>("contain");
+  const [showModeToast, setShowModeToast] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -61,7 +70,6 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
 
     const onReady = async () => {
       setLoading(false);
-      // Auto go fullscreen landscape on first playback
       if (containerRef.current) {
         await requestFullscreen(containerRef.current);
         await lockPortrait();
@@ -81,9 +89,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
       video.src = src;
     }
 
-    video.play().catch(() => {
-      /* autoplay may be blocked; user can press play */
-    });
+    video.play().catch(() => {});
 
     return () => {
       video.removeEventListener("playing", onReady);
@@ -102,25 +108,35 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
     };
   }, [src]);
 
-  // Keyboard shortcuts: ← / → skip 5s, space toggles play
+  const skip = (delta: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.currentTime = Math.max(0, Math.min(v.duration || Infinity, v.currentTime + delta));
+  };
+
+  const cycleResize = () => {
+    setResize((prev) => {
+      const idx = RESIZE_ORDER.indexOf(prev);
+      const next = RESIZE_ORDER[(idx + 1) % RESIZE_ORDER.length];
+      setShowModeToast(true);
+      window.setTimeout(() => setShowModeToast(false), 1200);
+      return next;
+    });
+  };
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const v = videoRef.current;
       if (!v) return;
-      if (e.key === "ArrowRight") { v.currentTime = Math.min(v.duration || v.currentTime + 5, v.currentTime + 5); }
-      else if (e.key === "ArrowLeft") { v.currentTime = Math.max(0, v.currentTime - 5); }
+      if (e.key === "ArrowRight") v.currentTime = Math.min(v.duration || v.currentTime + 5, v.currentTime + 5);
+      else if (e.key === "ArrowLeft") v.currentTime = Math.max(0, v.currentTime - 5);
       else if (e.key === " ") { e.preventDefault(); if (v.paused) v.play(); else v.pause(); }
-      else if (e.key === "Escape") { onClose?.(); }
+      else if (e.key === "Escape") onClose?.();
+      else if (e.key === "z" || e.key === "Z") cycleResize();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
-
-  const skip = (delta: number) => {
-    const v = videoRef.current;
-    if (!v) return;
-    v.currentTime = Math.max(0, Math.min((v.duration || Infinity), v.currentTime + delta));
-  };
 
   const goFullscreen = async () => {
     if (containerRef.current) {
@@ -129,57 +145,85 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
     }
   };
 
+  const videoClass =
+    resize === "fill"
+      ? "h-full w-full object-fill"
+      : resize === "cover"
+        ? "h-full w-full object-cover"
+        : "h-full w-full object-contain";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-0 sm:p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm">
       <div
         ref={containerRef}
-        className="relative w-full h-full sm:h-auto sm:max-w-5xl overflow-hidden sm:rounded-2xl border-0 sm:border sm:border-border bg-black shadow-2xl"
+        className="relative h-full w-full overflow-hidden bg-black sm:h-auto sm:max-w-5xl sm:rounded-2xl sm:border sm:border-border sm:shadow-2xl"
+        style={{
+          paddingTop: "env(safe-area-inset-top)",
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
       >
-        <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-black/80 to-transparent px-4 py-3">
+        <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-white/10 bg-gradient-to-b from-black/80 to-transparent px-4 py-3"
+             style={{ paddingTop: "calc(env(safe-area-inset-top) + 12px)" }}>
           <h3 className="truncate pr-4 text-sm font-semibold text-white">{title ?? "Reproduzindo"}</h3>
           <div className="flex items-center gap-2">
             <button
+              onClick={cycleResize}
+              aria-label={`Modo de tela: ${RESIZE_LABELS[resize]}`}
+              className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-medium text-white/90 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+            >
+              <Scaling className="h-3.5 w-3.5" />
+              {RESIZE_LABELS[resize]}
+            </button>
+            <button
               onClick={goFullscreen}
               aria-label="Tela cheia"
-              className="rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
               <Maximize2 className="h-5 w-5" />
             </button>
             <button
               onClick={onClose}
               aria-label="Fechar player"
-              className="rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-full p-1.5 text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
         </div>
-        <div className="relative h-full w-full sm:aspect-video bg-black">
+
+        <div className="relative h-full w-full bg-black sm:aspect-video">
           <video
             ref={videoRef}
             poster={poster}
             controls
             playsInline
             {...({ "webkit-playsinline": "true" } as Record<string, string>)}
-            className="h-full w-full object-contain"
+            className={videoClass}
           />
-          {/* ±5s skip buttons overlay */}
+
           <div className="pointer-events-none absolute inset-0 flex items-center justify-between px-6 sm:px-12">
             <button
               onClick={() => skip(-5)}
               aria-label="Voltar 5 segundos"
-              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur transition-all hover:scale-105 hover:bg-red-600/80 focus-visible:ring-2 focus-visible:ring-red-500 active:scale-95"
+              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur transition-all hover:scale-105 hover:bg-red-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:scale-95"
             >
               <Rewind className="h-6 w-6" />
             </button>
             <button
               onClick={() => skip(5)}
               aria-label="Avançar 5 segundos"
-              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur transition-all hover:scale-105 hover:bg-red-600/80 focus-visible:ring-2 focus-visible:ring-red-500 active:scale-95"
+              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-black/50 text-white backdrop-blur transition-all hover:scale-105 hover:bg-red-600/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 active:scale-95"
             >
               <FastForward className="h-6 w-6" />
             </button>
           </div>
+
+          {showModeToast && (
+            <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/15 bg-black/70 px-4 py-2 text-sm font-semibold text-white backdrop-blur">
+              {RESIZE_LABELS[resize]}
+            </div>
+          )}
+
           {loading && !error && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
               <Loader2 className="h-10 w-10 animate-spin text-red-500" />
