@@ -67,6 +67,48 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
 
     const isHls = /\.m3u8($|\?)/i.test(src);
     let hls: Hls | null = null;
+    let destroyed = false;
+    let recoverTimer: number | null = null;
+    let stallTimer: number | null = null;
+    let pruneTimer: number | null = null;
+    let netRetries = 0;
+    let mediaRetries = 0;
+    let lastTime = -1;
+    let stalledTicks = 0;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    // Pré-carregamento controlado: buffer menor no celular, maior no desktop/TV.
+    const maxBuffer = isMobile ? 18 : 45;
+
+    const softRecover = () => {
+      if (destroyed || !hls) return;
+      try {
+        hls.recoverMediaError();
+      } catch {
+        /* noop */
+      }
+    };
+
+    const restart = (delay = 1200) => {
+      if (destroyed || recoverTimer) return;
+      recoverTimer = window.setTimeout(() => {
+        recoverTimer = null;
+        if (destroyed) return;
+        if (hls) {
+          try {
+            hls.stopLoad();
+            hls.startLoad(-1);
+          } catch {
+            /* noop */
+          }
+        } else {
+          const t = video.currentTime;
+          video.load();
+          video.currentTime = t;
+        }
+        video.play().catch(() => {});
+      }, delay);
+    };
 
     const onReady = async () => {
       setLoading(false);
@@ -75,25 +117,151 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
         await lockPortrait();
       }
     };
+    const onLoadedData = () => setLoading(false);
+    const onWaiting = () => setLoading(true);
+    const onPlayingAgain = () => setLoading(false);
+    const onVideoError = () => {
+      const code = video.error?.code;
+      if (code === 3 /* MEDIA_ERR_DECODE */) {
+        if (mediaRetries++ < 3) {
+          softRecover();
+          restart(600);
+          return;
+        }
+        setError("Falha de decodificação do vídeo neste dispositivo.");
+      } else if (code === 2 /* NETWORK */) {
+        if (netRetries++ < 6) return restart(1500);
+        setError("Conexão instável. Não foi possível manter o stream.");
+      } else if (code === 4) {
+        setError("Formato de stream não suportado neste dispositivo.");
+      }
+    };
+
     video.addEventListener("playing", onReady, { once: true });
-    video.addEventListener("loadeddata", () => setLoading(false));
+    video.addEventListener("loadeddata", onLoadedData);
+    video.addEventListener("waiting", onWaiting);
+    video.addEventListener("playing", onPlayingAgain);
+    video.addEventListener("error", onVideoError);
 
     if (isHls && !video.canPlayType("application/vnd.apple.mpegurl") && Hls.isSupported()) {
-      hls = new Hls({ enableWorker: true });
+      hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: false,
+        // Buffer adaptativo / pré-carregamento controlado
+        maxBufferLength: maxBuffer,
+        maxMaxBufferLength: maxBuffer * 2,
+        backBufferLength: 30, // limpeza de buffer antigo (transmissões longas)
+        maxBufferSize: (isMobile ? 30 : 60) * 1000 * 1000,
+        maxBufferHole: 0.5,
+        // ABR
+        abrEwmaDefaultEstimate: isMobile ? 800_000 : 2_000_000,
+        startLevel: -1,
+        capLevelToPlayerSize: true,
+        // Retentativas de rede
+        manifestLoadingMaxRetry: 6,
+        levelLoadingMaxRetry: 6,
+        fragLoadingMaxRetry: 8,
+        fragLoadingRetryDelay: 800,
+      });
       hls.loadSource(src);
       hls.attachMedia(video);
       hls.on(Hls.Events.ERROR, (_e, data) => {
-        if (data.fatal) setError("Falha ao carregar o stream. Verifique a conexão ou o servidor.");
+        if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+          // Recuperação de bufferStalledError
+          const t = video.currentTime;
+          try {
+            video.currentTime = t + 0.1;
+          } catch {
+            /* noop */
+          }
+          video.play().catch(() => {});
+          return;
+        }
+        if (!data.fatal) return;
+        switch (data.type) {
+          case Hls.ErrorTypes.NETWORK_ERROR:
+            if (netRetries++ < 6) return restart(1500);
+            setError("Falha de rede ao carregar o stream. Tentativas esgotadas.");
+            break;
+          case Hls.ErrorTypes.MEDIA_ERROR:
+            if (mediaRetries++ < 3) {
+              softRecover();
+              return;
+            }
+            setError("Falha de mídia persistente no stream.");
+            break;
+          default:
+            setError("Falha ao carregar o stream. Verifique a conexão ou o servidor.");
+        }
+      });
+      hls.on(Hls.Events.FRAG_BUFFERED, () => {
+        netRetries = 0;
+        mediaRetries = 0;
       });
     } else {
       video.src = src;
     }
 
+    // Detecção de travamento: currentTime parado enquanto deveria tocar
+    stallTimer = window.setInterval(() => {
+      if (destroyed || video.paused || video.seeking) return;
+      if (video.currentTime === lastTime) {
+        stalledTicks++;
+        if (stalledTicks === 2) {
+          try {
+            video.currentTime = video.currentTime + 0.1;
+          } catch {
+            /* noop */
+          }
+          video.play().catch(() => {});
+        }
+        if (stalledTicks >= 4) {
+          stalledTicks = 0;
+          softRecover();
+          restart(300);
+        }
+      } else {
+        stalledTicks = 0;
+        lastTime = video.currentTime;
+      }
+    }, 2000);
+
+    // Limpeza periódica de buffer antigo em sessões longas
+    pruneTimer = window.setInterval(() => {
+      if (destroyed || !video.buffered.length) return;
+      const start = video.buffered.start(0);
+      if (video.currentTime - start > 120) {
+        try {
+          hls?.trigger(Hls.Events.BUFFER_FLUSHING, {
+            startOffset: 0,
+            endOffset: video.currentTime - 30,
+            type: null,
+          } as never);
+        } catch {
+          /* noop */
+        }
+      }
+    }, 30000);
+
     video.play().catch(() => {});
 
     return () => {
+      destroyed = true;
+      if (recoverTimer) window.clearTimeout(recoverTimer);
+      if (stallTimer) window.clearInterval(stallTimer);
+      if (pruneTimer) window.clearInterval(pruneTimer);
       video.removeEventListener("playing", onReady);
-      if (hls) hls.destroy();
+      video.removeEventListener("loadeddata", onLoadedData);
+      video.removeEventListener("waiting", onWaiting);
+      video.removeEventListener("playing", onPlayingAgain);
+      video.removeEventListener("error", onVideoError);
+      if (hls) {
+        hls.removeAllListeners?.();
+        hls.stopLoad();
+        hls.detachMedia();
+        hls.destroy();
+        hls = null;
+      }
       video.pause();
       video.removeAttribute("src");
       video.load();
@@ -107,6 +275,7 @@ export function VideoPlayer({ src, title, poster, onClose }: VideoPlayerProps) {
       else if (doc.msExitFullscreen) doc.msExitFullscreen();
     };
   }, [src]);
+
 
   const skip = (delta: number) => {
     const v = videoRef.current;
